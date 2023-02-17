@@ -4,7 +4,7 @@ interface TransactionRepository {
   save(transaction: Transaction): Promise<number>;
   get(nft: string): Promise<Transaction[]>;
   getAll(): Promise<Transaction[]>;
-  // profit(nft: string): number;
+  profit(nft: string): Promise<number>;
 }
 
 export class InMemoryTransactionRepository implements TransactionRepository {
@@ -30,7 +30,22 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     this.#data.forEach((transaction) => res.push(transaction));
     return res;
   }
+
+  async profit(nft: string): Promise<number> {
+    let profit = 0;
+    this.#data.forEach((transaction) => {
+      if (transaction.nft === nft) {
+        if (transaction.status === 'sold') {
+          profit += transaction.price;
+        } else if (transaction.status === 'bought') {
+          profit -= transaction.price;
+        }
+      }
+    });
+    return profit;
+  }
 }
+
 
 export async function repositoryFactory(url?: URL): Promise<TransactionRepository> {
   return new InMemoryTransactionRepository();
