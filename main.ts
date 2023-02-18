@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { Status } from "https://deno.land/std@0.173.0/http/http_status.ts";
 import { z } from "https://deno.land/x/zod@v3.20.5/mod.ts";
+import "https://deno.land/x/dotenv/load.ts";
+
 import { repositoryFactory } from "./database.ts";
 
-const repository = await repositoryFactory();
+const repository = await repositoryFactory(Deno.env.get("DATABASE_URL"));
 
 const port = 8080;
 
@@ -20,7 +22,7 @@ async function getTransactions(request: Request): Promise<Response> {
   return new Response(JSON.stringify(transactions), {
     status: Status.OK,
     headers: { "Content-Type": "application/json" },
-  })
+  });
 }
 
 async function createTransaction(request: Request): Promise<Response> {
@@ -53,7 +55,7 @@ async function handleTransaction(request: Request): Promise<Response> {
     case "POST":
       return await createTransaction(request);
   }
-  const res = {error: "invalid method"};
+  const res = { error: "invalid method" };
   return new Response(JSON.stringify(res), {
     status: Status.MethodNotAllowed,
     headers: {

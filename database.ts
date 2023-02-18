@@ -1,3 +1,5 @@
+import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
+
 import type { Transaction } from "./main.ts";
 
 interface TransactionRepository {
@@ -35,9 +37,9 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     let profit = 0;
     this.#data.forEach((transaction) => {
       if (transaction.nft === nft) {
-        if (transaction.status === 'sold') {
+        if (transaction.status === "sold") {
           profit += transaction.price;
-        } else if (transaction.status === 'bought') {
+        } else if (transaction.status === "bought") {
           profit -= transaction.price;
         }
       }
@@ -46,7 +48,79 @@ export class InMemoryTransactionRepository implements TransactionRepository {
   }
 }
 
+export class PostgresTransactionRepository implements TransactionRepository {
+  #client?: Client;
 
-export async function repositoryFactory(url?: URL): Promise<TransactionRepository> {
+  constructor(url: string) {
+    this.connect(url).then((client) => {
+      this.#client = client;
+      this.#client.queryArray(`
+CREATE TABLE IF NOT EXISTS transactions(
+  id SERIAL PRIMARY KEY,
+  nft VARCHAR(40) NOT NULL,
+  price REAL NOT NULL,
+  status VARCHAR(10) NOT NULL
+);
+      `);
+    });
+  }
+
+  async connect(url: string): Promise<Client> {
+    const client = new Client(url);
+    await client.connect();
+    return client;
+  }
+
+  async save(transaction: Transaction): Promise<number> {
+    const res = await this.#client?.queryArray<[number]>(`
+INSERT INTO transactions (
+  nft,
+  price,
+  status
+) VALUES (
+  '${transaction.nft}',
+  ${transaction.price},
+  '${transaction.status}'
+) RETURNING id;
+    `);
+    if (res == undefined) {
+      return 0;
+    }
+    console.log(res.rows[0]);
+    return res.rows[0][0];
+  }
+
+  async get(nft: string): Promise<Transaction[]> {
+    return [{ nft: nft, price: 1.0, status: "bought" }];
+  }
+
+  async getAll(): Promise<Transaction[]> {
+    const res = await this.#client?.queryArray<
+      [number, string, number, "sold" | "bought"]
+    >(
+      "SELECT id, nft, price, status FROM transactions;",
+    );
+    if (res == undefined) {
+      return [];
+    }
+
+    const transactions = res.rows.map((tx) => {
+      return { nft: tx[1], price: tx[2], status: tx[3] };
+    });
+
+    return transactions;
+  }
+
+  async profit(nft: string): Promise<number> {
+    return 0;
+  }
+}
+
+export async function repositoryFactory(
+  url?: string,
+): Promise<TransactionRepository> {
+  if (url) {
+    return new PostgresTransactionRepository(url);
+  }
   return new InMemoryTransactionRepository();
 }
