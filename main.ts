@@ -68,7 +68,13 @@ async function handler(request: Request): Promise<Response> {
   const { pathname } = new URL(request.url);
   switch (pathname) {
     case "/transaction":
-      return await handleTransaction(request);
+      const response = await handleTransaction(request);
+      response.headers.set(
+        "Access-Control-Allow-Origin",
+        "http://localhost:3000",
+        "https://afraid-tiger-production.up.railway.app/",
+      );
+      return response;
     default:
       return new Response("not found", { status: Status.NotFound });
   }
