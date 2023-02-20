@@ -64,6 +64,16 @@ async function handleTransaction(request: Request): Promise<Response> {
   });
 }
 
+// async function handler(request: Request): Promise<Response> {
+//   const { pathname } = new URL(request.url);
+//   switch (pathname) {
+//     case "/transaction":
+//       return await handleTransaction(request);
+//     default:
+//       return new Response("not found", { status: Status.NotFound });
+//   }
+// }
+
 async function handler(request: Request): Promise<Response> {
   const { pathname } = new URL(request.url);
   switch (pathname) {
@@ -71,14 +81,14 @@ async function handler(request: Request): Promise<Response> {
       const response = await handleTransaction(request);
       response.headers.set(
         "Access-Control-Allow-Origin",
-        "http://localhost:3000",
-        "https://afraid-tiger-production.up.railway.app/",
+        "http://localhost:3000 , https://afraid-tiger-production.up.railway.app/",
       );
       return response;
     default:
       return new Response("not found", { status: Status.NotFound });
   }
 }
+
 
 if (import.meta.main) {
   console.log(`HTTP webserver running. Access it at: http://localhost:8080/`);
