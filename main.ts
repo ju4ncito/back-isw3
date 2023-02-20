@@ -81,14 +81,13 @@ async function handler(request: Request): Promise<Response> {
       const response = await handleTransaction(request);
       response.headers.set(
         "Access-Control-Allow-Origin",
-        "http://localhost:3000 , https://afraid-tiger-production.up.railway.app/",
+        "*",
       );
       return response;
     default:
       return new Response("not found", { status: Status.NotFound });
   }
 }
-
 
 if (import.meta.main) {
   console.log(`HTTP webserver running. Access it at: http://localhost:8080/`);
