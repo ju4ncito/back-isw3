@@ -79,10 +79,10 @@ async function handler(request: Request): Promise<Response> {
   switch (pathname) {
     case "/transaction":
       const response = await handleTransaction(request);
-      response.headers.set(
-        "Access-Control-Allow-Origin",
-        "*",
-      );
+      const origin = request.headers.get("Origin");
+      if (origin) {
+        response.headers.set("Access-Control-Allow-Origin", origin);
+      }
       return response;
     default:
       return new Response("not found", { status: Status.NotFound });
