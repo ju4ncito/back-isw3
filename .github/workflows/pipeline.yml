@@ -67,3 +67,26 @@ jobs:
         run: railway up -s filthy-line
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: deploy-to-railway
+    steps:
+      - name: Get Integration Test Repository
+        uses: actions/checkout@v3
+        with:
+          repository: ju4ncito/integracion-isw3
+          path: integracion-isw3
+
+      - name: Use Node 18
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18.x
+
+      - name: Install packages
+        working-directory: ./integracion-isw3
+        run: npm ci
+
+      - name: Run Integration Test 
+        working-directory: ./integracion-isw3
+        run: npx codeceptjs run --steps
